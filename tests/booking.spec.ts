@@ -17,14 +17,21 @@ test('Room reservation flow', async ({ page }) => {
   await homePage.clickHeroBookNow();
 
   // Select first room
-  const { title, priceRoom } = await roomsPage.selectFirstRoom();
+  const { title, price } = await roomsPage.selectFirstRoom();
+
+  console.log(`Selected Room: ${title} with Price: ${price}`);
+  console.log(typeof price);
 
   //  Verify reservation page along with room title & calendar
   await reservationPage.verifyPage(title);
 
-  // Select stay duration (example nth(10) to nth(12)). 
+  // Select stay duration (example nth(10) to nth(12)).
   // However this functionality is not working as dates selection are disabled
-  const { nights, expectedTotal } = await reservationPage.selectDates(10, 12, Number(priceRoom));
+  const { nights, expectedTotal } = await reservationPage.selectDatesByDrag(
+    10,
+    12,
+    price
+  );
 
   // Reserve Now
   await reservationPage.clickReserve();

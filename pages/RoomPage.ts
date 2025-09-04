@@ -20,8 +20,11 @@ export default class RoomsPage {
 
     const title = await this.firstRoomTitle.innerText();
     const priceRoom = await this.firstRoomPrice.innerText();
+
+    const price = Number(priceRoom.replace(/\D/g, ""));
+
     await this.firstRoomBookNowButton.click();
 
-    return { title, priceRoom };
+    return { title, price };
   }
 }

@@ -9,10 +9,12 @@ export default class ReservationPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.header = page.locator('h1');
-    this.calendar = page.locator('.rbc-calendar');
-    this.priceSummary = page.locator('(//div[@class="d-flex justify-content-between mb-2"])[1]/span[2]');
-    this.reserveButton = page.getByRole('button', { name: 'Reserve' });
+    this.header = page.locator("h1");
+    this.calendar = page.locator(".rbc-calendar");
+    this.priceSummary = page.locator(
+      '(//div[@class="d-flex justify-content-between mb-2"])[1]/span[2]'
+    );
+    this.reserveButton = page.getByRole("button", { name: "Reserve" });
   }
 
   async verifyPage(title: string) {
@@ -21,21 +23,53 @@ export default class ReservationPage {
     await expect(this.calendar).toBeVisible();
   }
 
- async selectDates(startIndex: number, endIndex: number, price: number) {
-  const startDate = this.page.locator('.rbc-date-cell').nth(startIndex);
-  const endDate = this.page.locator('.rbc-date-cell').nth(endIndex);
+async selectDatesByDrag(startDate: number, endDate: number, price: number) {
+  if (isNaN(price)) throw new Error("Price must be numeric");
 
-  await startDate.click();
-  await endDate.click();
-  const nights = endIndex - startIndex + 1;
+  const allCells = this.page.locator(".rbc-date-cell button");
+  const startCell = allCells.locator(`text=${startDate}`).first();
+  const endCell = allCells.locator(`text=${endDate}`).first();
 
-  // Calculate expected total (including extra 40)
-  const expectedTotal = nights * price + 40;
+  await startCell.scrollIntoViewIfNeeded();
+  await endCell.scrollIntoViewIfNeeded();
 
-  // Verify price summary text contains the expected total
+  const startBox = await startCell.boundingBox();
+  const endBox = await endCell.boundingBox();
+  if (!startBox || !endBox) throw new Error("Date cells not found");
+
+  // Drag from start to end
+  await this.page.mouse.move(
+    startBox.x + startBox.width / 2,
+    startBox.y + startBox.height / 2
+  );
+  await this.page.mouse.down();
+
+  // Smooth intermediate steps for better reliability
+  const steps = 10;
+  for (let i = 1; i <= steps; i++) {
+    const x =
+      startBox.x + ((endBox.x - startBox.x) * i) / steps + startBox.width / 2;
+    const y =
+      startBox.y + ((endBox.y - startBox.y) * i) / steps + startBox.height / 2;
+    await this.page.mouse.move(x, y);
+  }
+
+  await this.page.mouse.up();
+
+  // Calculate nights and expected total
+  const nights = endDate - startDate + 1;
+  const expectedTotal = nights * price + 40; // add any fixed fees
+
+  // Parse the price summary text to numeric
   const summaryText = await this.priceSummary.innerText();
-  if (!summaryText.includes(expectedTotal.toString())) {
-    throw new Error(`Price summary mismatch: expected ${expectedTotal}, got ${summaryText}`);
+  const summaryNumber = Number(summaryText.replace(/\D/g, ""));
+  console.log(
+    `Price Summary Text: ${summaryText}, Parsed Number: ${summaryNumber}`
+  );
+  if (summaryNumber !== expectedTotal) {
+    throw new Error(
+      `Price summary mismatch: expected ${expectedTotal}, got ${summaryNumber}`
+    );
   }
 
   return { nights, expectedTotal };
