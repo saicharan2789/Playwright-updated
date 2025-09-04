@@ -37,14 +37,14 @@ async selectDatesByDrag(startDate: number, endDate: number, price: number) {
   const endBox = await endCell.boundingBox();
   if (!startBox || !endBox) throw new Error("Date cells not found");
 
-  // Drag from start to end
+ 
   await this.page.mouse.move(
     startBox.x + startBox.width / 2,
     startBox.y + startBox.height / 2
   );
   await this.page.mouse.down();
 
-  // Smooth intermediate steps for better reliability
+  
   const steps = 10;
   for (let i = 1; i <= steps; i++) {
     const x =
@@ -56,11 +56,10 @@ async selectDatesByDrag(startDate: number, endDate: number, price: number) {
 
   await this.page.mouse.up();
 
-  // Calculate nights and expected total
+ 
   const nights = endDate - startDate + 1;
-  const expectedTotal = nights * price + 40; // add any fixed fees
+  const expectedTotal = nights * price + 40; // add cleaning fixed fees
 
-  // Parse the price summary text to numeric
   const summaryText = await this.priceSummary.innerText();
   const summaryNumber = Number(summaryText.replace(/\D/g, ""));
   console.log(
