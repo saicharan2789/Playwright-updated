@@ -29,7 +29,8 @@ This repository provides examples and utilities for using [Playwright](https://p
 
 ## Project Structure
 
-- `tests/` — Example test scripts
+- `tests/` —  test scripts files
+- `pages/` —  locators and methods of each page are stored in it.
 - `playwright.config.js` — Playwright configuration file
 
 ## Documentation
